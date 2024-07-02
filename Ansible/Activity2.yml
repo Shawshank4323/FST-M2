@@ -1,20 +1,31 @@
-hosts: local
-become: true
-tasks:
-  -name: Install required comments
-   apt:
-    name:
-        -git
-        -maven
-        -openjdk-17-jdk
-    state: present
-  -name: Clone maven repo
-    git:
-      repo: https://github.com/training-support/FST_JUnit_Project.git
-      dest: ~/FST_JUnit_Project
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update all the packages
+      dnf:
+        name: '*'
+        state: latest
+    - name: Install required packages
+      dnf:
+        name:
+          - nginx
+          - firewalld
+        state: present
+      notify:
+        - Start nginx
+        - Start firewalld
+    - name: Open port 80 on the firewall
+      firewalld:
+        port: 80/tcp
+        state: enabled
 
-
-  -name: Run Maven Tests
-   command: mvn clean test
-    args:
-        chdir: ~/FST_JUnit_Project
+  handlers:
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+    - name: Start firewalld
+      service:
+        name: firewalld
+        state: started
